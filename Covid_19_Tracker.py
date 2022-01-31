@@ -18,7 +18,7 @@ st.write("""
          This is a web app build by CIT Group 6 Cohort 2, that tracks the covid 19 cases in the world.
          """)
 
-url = "https://api.covid19api.com/countries"
+url = 'https://api.covid19api.com/countries'
 req = requests.get(url)
 df0 = json_normalize(req.json())
 
@@ -32,63 +32,63 @@ st.sidebar.header('Create/Filter search')
 graph_type = st.sidebar.selectbox(
     'Cases type', ('confirmed', 'deaths', 'recovered'))
 st.sidebar.subheader('Search by country')
-country1 = st.sidebar.selectbox('Country', df0.Country)
-country2 = st.sidebar.selectbox('Compare with another country', df0.Country)
+countryX = st.sidebar.selectbox('Country', df0.Country)
+countryY = st.sidebar.selectbox('Compare with another country', df0.Country)
 
 if st.sidebar.button('Refresh Data'):
     raise RerunException(st.ScriptRequestQueue.RerunData(None))
 
-if country1 != 'Select a Country':
-    slug = df0.Slug[df0['Country'] == country1].to_string(index=False)[1:]
-    url = 'https://api.covid19api.com/dayone/country/'+slug+'/status/'+graph_type
+if countryX != 'Select a Country':
+    slug = df0.Slug[df0['Country'] == countryX].to_string(index=False)[1:]
+    url = 'https://api.covid19api.com/total/dayone/country/'+slug+'/status/'+graph_type
     r = requests.get(url)
-    st.write("""
-             # Total""" + graph_type + """ cases in """ + country1 + """+are : """+str(r.json()[-1].get("Cases")))
+    st.write("""# Total """ + graph_type + """ cases in """ +
+             countryX + """ are: """+str(r.json()[-1].get("Cases")))
     df = json_normalize(r.json())
     layout = go.Layout(
-        title=country1 + '\'s ' + graph_type + ' cases Data',
+        title=countryX + '\'s ' + graph_type + ' cases Data',
         xaxis=dict(title='Date'),
         yaxis=dict(title='Number of cases'),
     )
 
     fig.update_layout(dict1=layout, overwrite=True)
     fig.add_trace(go.Scatter(x=df.Date, y=df.Cases,
-                  mode='lines', name=country1))
+                  mode='lines', name=countryX))
 
-    if country2 != 'Select a Country':
-        slug1 = df0.Slug(df0['Country'] == country2).to_string(index=False)[1:]
+    if countryY != 'Select a Country':
+        slug1 = df0.Slug(df0['Country'] == countryY).to_string(index=False)[1:]
         url = 'https://api.covid19api.com/total/dayone/country/'+slug1+'/status/'+graph_type
         r = requests.get(url)
-        st.write("""#Total """ + graph_type + """ cases in """ + country2 + """+are : """ +
+        st.write("""#Total """ + graph_type + """ cases in """ + countryY + """are : """ +
                  str(r.json()[-1].get("Cases")))
         df = json_normalize(r.json())
         layout = go.Layout(
-            title=country2 + ' vs ' + graph_type + ' cases Data',
+            title=countryX + ' vs ' + countryY+' ' + graph_type + ' cases Data',
             xaxis=dict(title='Date'),
             yaxis=dict(title='Number of cases'),
         )
     fig.update_layout(dict1=layout, overwrite=True)
     fig.add_trace(go.Scatter(x=df.Date, y=df.Cases,
-                  mode='lines', name=country2))
+                  mode='lines', name=countryY))
 
 else:
     url = 'https://api.covid19api.com/world/total'
     r = requests.get(url)
-    total = r.json()['TotalConfrimed']
+    total = r.json()['TotalConfirmed']
     deaths = r.json()['TotalDeaths']
     recovered = r.json()['TotalRecovered']
     st.write("""
-                # WordlWide Data
+                # WordlWide Data:
                 """)
     st.write("Total cases: "+str(total)+", Total deaths: " +
              str(deaths)+", Total recovered: "+str(recovered))
     x = ["TotalCases", "TotalDeaths", "TotalRecovered"]
     y = [total, deaths, recovered]
 
-    layout = go.layout(
+    layout = go.Layout(
         title='World Data',
         xaxis=dict(title="Category"),
-        yaxis=dict(title="Number of cases")
+        yaxis=dict(title="Number of cases"),
     )
 
     fig.update_layout(dict1=layout, overwrite=True)
