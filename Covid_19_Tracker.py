@@ -7,10 +7,11 @@ from plotly.offline import iplot
 import plotly.graph_objs as go
 import plotly.express as px
 from pandas.io.json import json_normalize
-from streamlit.script_runner import RerunException
+from streamlit.script_runner import StopException, RerunException
 
 
 fig = go.Figure()
+
 st.write("""
         #  Covid 19 Tracking App 🚑
          """)
@@ -19,11 +20,12 @@ st.write("""
          """)
 
 url = 'https://api.covid19api.com/countries'
-req = requests.get(url)
-df0 = json_normalize(req.json())
+r = requests.get(url)
+df0 = json_normalize(r.json())
 
 top_row = pd.DataFrame(
-    {'Country': ['Select a Country'], 'Slug': ['Empty'], 'ISO2': ['E']})
+    {'Country': ['Select a Country'], 'Slug': ['Empty'], 'ISO2': ['E']}
+)
 
 # Concatenate with the old frame and reset the Index
 df0 = pd.concat([top_row, df0]).reset_index(drop=True)
@@ -48,28 +50,32 @@ if countryX != 'Select a Country':
     layout = go.Layout(
         title=countryX + '\'s ' + graph_type + ' cases Data',
         xaxis=dict(title='Date'),
-        yaxis=dict(title='Number of cases'),
-    )
+        yaxis=dict(title='Number of cases'),)
 
     fig.update_layout(dict1=layout, overwrite=True)
     fig.add_trace(go.Scatter(x=df.Date, y=df.Cases,
                   mode='lines', name=countryX))
 
     if countryY != 'Select a Country':
-        slug1 = df0.Slug(df0['Country'] == countryY).to_string(index=False)[1:]
+        slug1 = df0.Slug[df0['Country'] == countryY].to_string(index=False)[1:]
         url = 'https://api.covid19api.com/total/dayone/country/'+slug1+'/status/'+graph_type
         r = requests.get(url)
-        st.write("""#Total """ + graph_type + """ cases in """ + countryY + """are : """ +
+        st.write("""# Total """ + graph_type + """ cases in """ + countryY + """are : """ +
                  str(r.json()[-1].get("Cases")))
+
         df = json_normalize(r.json())
+
         layout = go.Layout(
             title=countryX + ' vs ' + countryY+' ' + graph_type + ' cases Data',
             xaxis=dict(title='Date'),
             yaxis=dict(title='Number of cases'),
         )
-    fig.update_layout(dict1=layout, overwrite=True)
-    fig.add_trace(go.Scatter(x=df.Date, y=df.Cases,
-                  mode='lines', name=countryY))
+        fig.update_layout(dict1=layout, overwrite=True)
+        fig.add_trace(go.Scatter(x=df.Date, y=df.Cases,
+                                 mode='lines', name=countryY))
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 else:
     url = 'https://api.covid19api.com/world/total'
